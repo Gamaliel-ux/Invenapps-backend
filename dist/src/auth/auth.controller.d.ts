@@ -6,6 +6,7 @@ export declare class AuthController {
     constructor(authService: AuthService);
     login(loginDto: LoginDto): Promise<{
         access_token: string;
+        expires_in: number;
         user: {
             id: any;
             username: any;

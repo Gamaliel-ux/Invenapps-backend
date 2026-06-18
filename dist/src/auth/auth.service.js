@@ -73,6 +73,7 @@ let AuthService = class AuthService {
         const payload = { username: user.username, sub: user.id, role: user.role };
         return {
             access_token: this.jwtService.sign(payload),
+            expires_in: 3600,
             user: {
                 id: user.id,
                 username: user.username,
