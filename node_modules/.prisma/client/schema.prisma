@@ -1,0 +1,201 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  MANAGER
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  TRANSFER
+}
+
+enum POStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  RECEIVED
+  CANCELLED
+}
+
+enum SOStatus {
+  DRAFT
+  PAID
+  COMPLETED
+  CANCELLED
+}
+
+enum OpnameStatus {
+  PENDING
+  ADJUSTED
+}
+
+enum NotificationType {
+  LOW_STOCK
+  OUT_OF_STOCK
+  PENDING_APPROVAL
+  SYSTEM
+}
+
+model User {
+  id           String     @id @default(uuid())
+  username     String     @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  AuditLog     AuditLog[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String
+  contact        String?
+  phone          String?
+  address        String?
+  createdAt      DateTime        @default(now())
+  products       Product[]
+  PurchaseOrders PurchaseOrder[]
+}
+
+model Customer {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  name        String
+  phone       String
+  email       String
+  address     String
+  createdAt   DateTime     @default(now())
+  SalesOrders SalesOrder[]
+}
+
+model Product {
+  id                String              @id @default(uuid())
+  sku               String              @unique
+  barcode           String              @unique
+  name              String
+  description       String
+  categoryId        String
+  category          Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplierId        String?
+  supplier          Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  purchasePrice     Float
+  sellingPrice      Float
+  stock             Int                 @default(0)
+  minStock          Int                 @default(0)
+  unit              String
+  isDeleted         Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  PurchaseOrderItem PurchaseOrderItem[]
+  SalesOrderItem    SalesOrderItem[]
+  StockMovements    StockMovement[]
+  StockOpnames      StockOpname[]
+}
+
+model PurchaseOrder {
+  id         String              @id @default(uuid())
+  code       String              @unique
+  supplierId String
+  supplier   Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items      PurchaseOrderItem[]
+  totalValue Float
+  status     POStatus            @default(DRAFT)
+  notes      String?
+  createdAt  DateTime            @default(now())
+  approvedBy String?
+  receivedBy String?
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity        Int
+  price           Float
+}
+
+model SalesOrder {
+  id         String           @id @default(uuid())
+  code       String           @unique
+  customerId String
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items      SalesOrderItem[]
+  totalValue Float
+  status     SOStatus         @default(DRAFT)
+  notes      String?
+  createdAt  DateTime         @default(now())
+}
+
+model SalesOrderItem {
+  id           String     @id @default(uuid())
+  salesOrderId String
+  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity     Int
+  price        Float
+}
+
+model StockMovement {
+  id        String       @id @default(uuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      MovementType
+  quantity  Int
+  user      String
+  notes     String?
+  createdAt DateTime     @default(now())
+}
+
+model StockOpname {
+  id               String       @id @default(uuid())
+  code             String       @unique
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  systemQuantity   Int
+  physicalQuantity Int
+  difference       Int
+  notes            String?
+  status           OpnameStatus @default(PENDING)
+  user             String
+  createdAt        DateTime     @default(now())
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username  String
+  action    String
+  module    String
+  detail    String?
+  createdAt DateTime @default(now())
+}
