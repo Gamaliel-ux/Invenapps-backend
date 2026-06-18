@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -19,6 +20,13 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Security: Rate limiting (max 100 requests per 15 minutes per IP)
+    ThrottlerModule.forRoot([
+      {
+        ttl: 900000, // 15 minutes in milliseconds
+        limit: 100,
+      },
+    ]),
     PrismaModule,
     AuthModule,
     UsersModule,

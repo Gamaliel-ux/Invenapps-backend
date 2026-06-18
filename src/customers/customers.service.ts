@@ -11,6 +11,18 @@ export class CustomersService {
   ) {}
 
   async create(dto: CreateCustomerDto, reqUser: any) {
+    // Auto-generate code if not provided
+    if (!dto.code) {
+      const lastCustomer = await this.prisma.customer.findFirst({
+        orderBy: { code: 'desc' },
+        where: { code: { startsWith: 'CUST-' } },
+      });
+      const lastNum = lastCustomer
+        ? parseInt(lastCustomer.code.replace('CUST-', ''), 10)
+        : 0;
+      dto.code = `CUST-${String(lastNum + 1).padStart(4, '0')}`;
+    }
+
     const existing = await this.prisma.customer.findUnique({
       where: { code: dto.code },
     });
@@ -18,7 +30,15 @@ export class CustomersService {
       throw new ConflictException(`Customer code "${dto.code}" already exists`);
     }
 
-    const customer = await this.prisma.customer.create({ data: dto });
+    const customer = await this.prisma.customer.create({
+      data: {
+        code: dto.code as string,
+        name: dto.name,
+        phone: dto.phone,
+        email: dto.email,
+        address: dto.address,
+      },
+    });
 
     await this.auditLogs.create({
       userId: reqUser.id,
@@ -54,18 +74,27 @@ export class CustomersService {
   }
 
   async update(id: string, dto: CreateCustomerDto, reqUser: any) {
-    await this.findOne(id);
+    const current = await this.findOne(id);
+
+    // If code is not provided, keep the existing code
+    const code = dto.code || current.code;
 
     const existing = await this.prisma.customer.findFirst({
-      where: { code: dto.code, id: { not: id } },
+      where: { code, id: { not: id } },
     });
     if (existing) {
-      throw new ConflictException(`Customer code "${dto.code}" is already in use by another customer`);
+      throw new ConflictException(`Customer code "${code}" is already in use by another customer`);
     }
 
     const updated = await this.prisma.customer.update({
       where: { id },
-      data: dto,
+      data: {
+        code,
+        name: dto.name,
+        phone: dto.phone,
+        email: dto.email,
+        address: dto.address,
+      },
     });
 
     await this.auditLogs.create({

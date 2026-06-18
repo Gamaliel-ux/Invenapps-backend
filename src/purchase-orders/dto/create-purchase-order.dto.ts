@@ -18,8 +18,8 @@ class PurchaseOrderItemDto {
 
 export class CreatePurchaseOrderDto {
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @IsString()
   @IsNotEmpty()

@@ -14,6 +14,18 @@ export class StockOpnamesService {
   ) {}
 
   async create(dto: CreateStockOpnameDto, reqUser: any) {
+    // Auto-generate code if not provided
+    if (!dto.code) {
+      const lastOpname = await this.prisma.stockOpname.findFirst({
+        orderBy: { code: 'desc' },
+        where: { code: { startsWith: 'SO-OP-' } },
+      });
+      const lastNum = lastOpname
+        ? parseInt(lastOpname.code.replace('SO-OP-', ''), 10)
+        : 0;
+      dto.code = `SO-OP-${String(lastNum + 1).padStart(4, '0')}`;
+    }
+
     const existing = await this.prisma.stockOpname.findUnique({
       where: { code: dto.code },
     });
@@ -28,12 +40,13 @@ export class StockOpnamesService {
       throw new NotFoundException(`Product with ID ${dto.productId} not found`);
     }
 
+    // Always compute from actual product stock (ignore any client-sent values)
     const systemQuantity = product.stock;
     const difference = dto.physicalQuantity - systemQuantity;
 
     const opname = await this.prisma.stockOpname.create({
       data: {
-        code: dto.code,
+        code: dto.code as string,
         productId: dto.productId,
         systemQuantity,
         physicalQuantity: dto.physicalQuantity,

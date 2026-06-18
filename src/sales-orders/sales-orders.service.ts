@@ -15,6 +15,20 @@ export class SalesOrdersService {
   ) {}
 
   async create(dto: CreateSalesOrderDto, reqUser: any) {
+    // Auto-generate code if not provided
+    if (!dto.code) {
+      const year = new Date().getFullYear();
+      const prefix = `SO-${year}-`;
+      const lastSO = await this.prisma.salesOrder.findFirst({
+        orderBy: { code: 'desc' },
+        where: { code: { startsWith: prefix } },
+      });
+      const lastNum = lastSO
+        ? parseInt(lastSO.code.replace(prefix, ''), 10)
+        : 0;
+      dto.code = `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
+    }
+
     const existing = await this.prisma.salesOrder.findUnique({
       where: { code: dto.code },
     });
@@ -22,18 +36,35 @@ export class SalesOrdersService {
       throw new ConflictException(`Sales Order code "${dto.code}" already exists`);
     }
 
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: dto.customerId },
+    });
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${dto.customerId} not found`);
+    }
+
     const totalValue = dto.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const status = dto.status || SOStatus.DRAFT;
 
+    const productIds = dto.items.map(i => i.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, isDeleted: false },
+    });
+    const foundIds = products.map(p => p.id);
+    const missingIds = productIds.filter(id => !foundIds.includes(id));
+    if (missingIds.length > 0) {
+      throw new NotFoundException(`Products not found: ${missingIds.join(', ')}`);
+    }
+
     // If directly created as PAID or COMPLETED, validate and deduct stock
     if (status === SOStatus.PAID || status === SOStatus.COMPLETED) {
-      await this.validateAndDeductStock(dto.items, reqUser.username, dto.code);
+      await this.validateAndDeductStock(dto.items, reqUser.username, dto.code as string);
     }
 
     // Create SO
     const so = await this.prisma.salesOrder.create({
       data: {
-        code: dto.code,
+        code: dto.code as string,
         customerId: dto.customerId,
         totalValue,
         status,

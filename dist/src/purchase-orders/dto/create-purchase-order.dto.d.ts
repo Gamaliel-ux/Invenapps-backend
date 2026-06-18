@@ -5,7 +5,7 @@ declare class PurchaseOrderItemDto {
     price: number;
 }
 export declare class CreatePurchaseOrderDto {
-    code: string;
+    code?: string;
     supplierId: string;
     items: PurchaseOrderItemDto[];
     status?: POStatus;

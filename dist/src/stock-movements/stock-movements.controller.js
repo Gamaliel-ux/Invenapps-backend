@@ -15,12 +15,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StockMovementsController = void 0;
 const common_1 = require("@nestjs/common");
 const stock_movements_service_1 = require("./stock-movements.service");
+const create_stock_movement_dto_1 = require("./dto/create-stock-movement.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const roles_guard_1 = require("../auth/guards/roles.guard");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const client_1 = require("@prisma/client");
 const swagger_1 = require("@nestjs/swagger");
 let StockMovementsController = class StockMovementsController {
     stockMovementsService;
     constructor(stockMovementsService) {
         this.stockMovementsService = stockMovementsService;
+    }
+    async create(dto, req) {
+        return this.stockMovementsService.create(dto, req.user);
     }
     async findAll() {
         return this.stockMovementsService.findAll();
@@ -30,6 +37,15 @@ let StockMovementsController = class StockMovementsController {
     }
 };
 exports.StockMovementsController = StockMovementsController;
+__decorate([
+    (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.MANAGER, client_1.Role.STAFF),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_stock_movement_dto_1.CreateStockMovementDto, Object]),
+    __metadata("design:returntype", Promise)
+], StockMovementsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
@@ -46,7 +62,7 @@ __decorate([
 exports.StockMovementsController = StockMovementsController = __decorate([
     (0, swagger_1.ApiTags)('stock-movements'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('stock-movements'),
     __metadata("design:paramtypes", [stock_movements_service_1.StockMovementsService])
 ], StockMovementsController);

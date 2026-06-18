@@ -21,11 +21,21 @@ exports.RegisterDto = RegisterDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(3, { message: 'Username must be at least 3 characters' }),
+    (0, class_validator_1.MaxLength)(50, { message: 'Username must not exceed 50 characters' }),
+    (0, class_validator_1.Matches)(/^[a-zA-Z0-9_-]+$/, {
+        message: 'Username can only contain letters, numbers, underscore, and hyphen',
+    }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "username", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(8, { message: 'Password must be at least 8 characters' }),
+    (0, class_validator_1.MaxLength)(128, { message: 'Password must not exceed 128 characters' }),
+    (0, class_validator_1.Matches)(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+        message: 'Password must contain uppercase, lowercase, number, and special character (@$!%*?&)',
+    }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "password", void 0);
 __decorate([

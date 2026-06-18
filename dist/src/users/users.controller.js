@@ -37,6 +37,9 @@ let UsersController = class UsersController {
     async updateRole(id, role) {
         return this.usersService.updateRole(id, role);
     }
+    async unlockUser(id) {
+        return this.usersService.unlockUser(id);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -72,6 +75,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateRole", null);
+__decorate([
+    (0, common_1.Patch)(':id/unlock'),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "unlockUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, swagger_1.ApiBearerAuth)(),

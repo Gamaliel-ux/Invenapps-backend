@@ -31,4 +31,13 @@ export declare class UsersController {
         isActive: boolean;
         createdAt: Date;
     }>;
+    unlockUser(id: string): Promise<{
+        id: string;
+        username: string;
+        role: import("@prisma/client").$Enums.Role;
+        isActive: boolean;
+        loginAttempts: number;
+        lockUntil: Date | null;
+        createdAt: Date;
+    }>;
 }

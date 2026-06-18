@@ -21,13 +21,31 @@ let CustomersService = class CustomersService {
         this.auditLogs = auditLogs;
     }
     async create(dto, reqUser) {
+        if (!dto.code) {
+            const lastCustomer = await this.prisma.customer.findFirst({
+                orderBy: { code: 'desc' },
+                where: { code: { startsWith: 'CUST-' } },
+            });
+            const lastNum = lastCustomer
+                ? parseInt(lastCustomer.code.replace('CUST-', ''), 10)
+                : 0;
+            dto.code = `CUST-${String(lastNum + 1).padStart(4, '0')}`;
+        }
         const existing = await this.prisma.customer.findUnique({
             where: { code: dto.code },
         });
         if (existing) {
             throw new common_1.ConflictException(`Customer code "${dto.code}" already exists`);
         }
-        const customer = await this.prisma.customer.create({ data: dto });
+        const customer = await this.prisma.customer.create({
+            data: {
+                code: dto.code,
+                name: dto.name,
+                phone: dto.phone,
+                email: dto.email,
+                address: dto.address,
+            },
+        });
         await this.auditLogs.create({
             userId: reqUser.id,
             username: reqUser.username,
@@ -58,16 +76,23 @@ let CustomersService = class CustomersService {
         return customer;
     }
     async update(id, dto, reqUser) {
-        await this.findOne(id);
+        const current = await this.findOne(id);
+        const code = dto.code || current.code;
         const existing = await this.prisma.customer.findFirst({
-            where: { code: dto.code, id: { not: id } },
+            where: { code, id: { not: id } },
         });
         if (existing) {
-            throw new common_1.ConflictException(`Customer code "${dto.code}" is already in use by another customer`);
+            throw new common_1.ConflictException(`Customer code "${code}" is already in use by another customer`);
         }
         const updated = await this.prisma.customer.update({
             where: { id },
-            data: dto,
+            data: {
+                code,
+                name: dto.name,
+                phone: dto.phone,
+                email: dto.email,
+                address: dto.address,
+            },
         });
         await this.auditLogs.create({
             userId: reqUser.id,

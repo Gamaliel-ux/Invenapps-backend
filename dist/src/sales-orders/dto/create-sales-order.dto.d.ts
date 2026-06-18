@@ -5,7 +5,7 @@ declare class SalesOrderItemDto {
     price: number;
 }
 export declare class CreateSalesOrderDto {
-    code: string;
+    code?: string;
     customerId: string;
     items: SalesOrderItemDto[];
     status?: SOStatus;

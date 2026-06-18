@@ -1,17 +1,38 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const http_exception_filter_1 = require("./common/filters/http-exception.filter");
+const helmet_1 = __importDefault(require("helmet"));
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.enableCors();
+    app.use((0, helmet_1.default)());
+    app.enableCors({
+        origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    });
+    app.use((req, res, next) => {
+        req.setTimeout(30000);
+        res.setTimeout(30000);
+        next();
+    });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
+        forbidNonWhitelisted: false,
         transform: true,
+        transformOptions: {
+            enableImplicitConversion: true,
+        },
     }));
+    app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Invenapps API')
         .setDescription('Inventory Management System Backend API documentation')

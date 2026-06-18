@@ -36,4 +36,10 @@ export class UsersController {
   async updateRole(@Param('id') id: string, @Body('role') role: Role) {
     return this.usersService.updateRole(id, role);
   }
+
+  @Patch(':id/unlock')
+  @Roles(Role.ADMIN)
+  async unlockUser(@Param('id') id: string) {
+    return this.usersService.unlockUser(id);
+  }
 }

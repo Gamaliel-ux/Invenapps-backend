@@ -17,6 +17,10 @@ export declare class UsersService {
         passwordHash: string;
         role: import("@prisma/client").$Enums.Role;
         isActive: boolean;
+        loginAttempts: number;
+        lockUntil: Date | null;
+        lastLoginAt: Date | null;
+        isFirstLogin: boolean;
         createdAt: Date;
     } | null>;
     findOne(id: string): Promise<{
@@ -45,6 +49,15 @@ export declare class UsersService {
         username: string;
         role: import("@prisma/client").$Enums.Role;
         isActive: boolean;
+        createdAt: Date;
+    }>;
+    unlockUser(id: string): Promise<{
+        id: string;
+        username: string;
+        role: import("@prisma/client").$Enums.Role;
+        isActive: boolean;
+        loginAttempts: number;
+        lockUntil: Date | null;
         createdAt: Date;
     }>;
 }

@@ -2,8 +2,8 @@ import { IsNotEmpty, IsString, IsNumber, IsOptional, Min } from 'class-validator
 
 export class CreateStockOpnameDto {
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -12,6 +12,14 @@ export class CreateStockOpnameDto {
   @IsNumber()
   @Min(0)
   physicalQuantity: number;
+
+  @IsNumber()
+  @IsOptional()
+  systemQuantity?: number;
+
+  @IsNumber()
+  @IsOptional()
+  difference?: number;
 
   @IsString()
   @IsOptional()

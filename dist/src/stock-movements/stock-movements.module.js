@@ -10,11 +10,14 @@ exports.StockMovementsModule = void 0;
 const common_1 = require("@nestjs/common");
 const stock_movements_service_1 = require("./stock-movements.service");
 const stock_movements_controller_1 = require("./stock-movements.controller");
+const products_module_1 = require("../products/products.module");
+const audit_logs_module_1 = require("../audit-logs/audit-logs.module");
 let StockMovementsModule = class StockMovementsModule {
 };
 exports.StockMovementsModule = StockMovementsModule;
 exports.StockMovementsModule = StockMovementsModule = __decorate([
     (0, common_1.Module)({
+        imports: [products_module_1.ProductsModule, audit_logs_module_1.AuditLogsModule],
         controllers: [stock_movements_controller_1.StockMovementsController],
         providers: [stock_movements_service_1.StockMovementsService],
         exports: [stock_movements_service_1.StockMovementsService],

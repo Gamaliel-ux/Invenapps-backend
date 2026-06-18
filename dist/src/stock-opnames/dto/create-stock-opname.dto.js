@@ -15,12 +15,14 @@ class CreateStockOpnameDto {
     code;
     productId;
     physicalQuantity;
+    systemQuantity;
+    difference;
     notes;
 }
 exports.CreateStockOpnameDto = CreateStockOpnameDto;
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateStockOpnameDto.prototype, "code", void 0);
 __decorate([
@@ -33,6 +35,16 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateStockOpnameDto.prototype, "physicalQuantity", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateStockOpnameDto.prototype, "systemQuantity", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateStockOpnameDto.prototype, "difference", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

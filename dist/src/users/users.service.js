@@ -79,6 +79,18 @@ let UsersService = class UsersService {
     async findOneByUsername(username) {
         return this.prisma.user.findUnique({
             where: { username },
+            select: {
+                id: true,
+                username: true,
+                passwordHash: true,
+                role: true,
+                isActive: true,
+                loginAttempts: true,
+                lockUntil: true,
+                lastLoginAt: true,
+                isFirstLogin: true,
+                createdAt: true,
+            },
         });
     }
     async findOne(id) {
@@ -132,6 +144,25 @@ let UsersService = class UsersService {
                 username: true,
                 role: true,
                 isActive: true,
+                createdAt: true,
+            },
+        });
+    }
+    async unlockUser(id) {
+        await this.findOne(id);
+        return this.prisma.user.update({
+            where: { id },
+            data: {
+                loginAttempts: 0,
+                lockUntil: null,
+            },
+            select: {
+                id: true,
+                username: true,
+                role: true,
+                isActive: true,
+                loginAttempts: true,
+                lockUntil: true,
                 createdAt: true,
             },
         });

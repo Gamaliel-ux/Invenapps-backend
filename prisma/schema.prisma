@@ -54,6 +54,10 @@ model User {
   passwordHash String
   role         Role
   isActive     Boolean    @default(true)
+  loginAttempts Int       @default(0)
+  lockUntil     DateTime?
+  lastLoginAt   DateTime?
+  isFirstLogin  Boolean    @default(false)
   createdAt    DateTime   @default(now())
   AuditLog     AuditLog[]
 }

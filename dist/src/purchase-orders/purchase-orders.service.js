@@ -28,14 +28,41 @@ let PurchaseOrdersService = class PurchaseOrdersService {
         this.auditLogs = auditLogs;
     }
     async create(dto, reqUser) {
+        if (!dto.code) {
+            const year = new Date().getFullYear();
+            const prefix = `PO-${year}-`;
+            const lastPO = await this.prisma.purchaseOrder.findFirst({
+                orderBy: { code: 'desc' },
+                where: { code: { startsWith: prefix } },
+            });
+            const lastNum = lastPO
+                ? parseInt(lastPO.code.replace(prefix, ''), 10)
+                : 0;
+            dto.code = `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
+        }
         const existing = await this.prisma.purchaseOrder.findUnique({
             where: { code: dto.code },
         });
         if (existing) {
             throw new common_1.ConflictException(`Purchase Order code "${dto.code}" already exists`);
         }
+        const supplier = await this.prisma.supplier.findUnique({
+            where: { id: dto.supplierId },
+        });
+        if (!supplier) {
+            throw new common_1.NotFoundException(`Supplier with ID ${dto.supplierId} not found`);
+        }
         const totalValue = dto.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const status = dto.status || client_1.POStatus.DRAFT;
+        const productIds = dto.items.map(i => i.productId);
+        const products = await this.prisma.product.findMany({
+            where: { id: { in: productIds }, isDeleted: false },
+        });
+        const foundIds = products.map(p => p.id);
+        const missingIds = productIds.filter(id => !foundIds.includes(id));
+        if (missingIds.length > 0) {
+            throw new common_1.NotFoundException(`Products not found: ${missingIds.join(', ')}`);
+        }
         const po = await this.prisma.purchaseOrder.create({
             data: {
                 code: dto.code,

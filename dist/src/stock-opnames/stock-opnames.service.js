@@ -25,6 +25,16 @@ let StockOpnamesService = class StockOpnamesService {
         this.auditLogs = auditLogs;
     }
     async create(dto, reqUser) {
+        if (!dto.code) {
+            const lastOpname = await this.prisma.stockOpname.findFirst({
+                orderBy: { code: 'desc' },
+                where: { code: { startsWith: 'SO-OP-' } },
+            });
+            const lastNum = lastOpname
+                ? parseInt(lastOpname.code.replace('SO-OP-', ''), 10)
+                : 0;
+            dto.code = `SO-OP-${String(lastNum + 1).padStart(4, '0')}`;
+        }
         const existing = await this.prisma.stockOpname.findUnique({
             where: { code: dto.code },
         });
