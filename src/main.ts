@@ -14,7 +14,25 @@ async function bootstrap() {
 
   // Security: CORS with whitelist
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+    origin: (origin: any, callback: any) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      const isLocalhost =
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('https://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('https://127.0.0.1:');
+      
+      const envOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+      const isEnvMatch = envOrigins.some(o => o.trim() === origin);
+      
+      if (isLocalhost || isEnvMatch) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -132,4 +132,15 @@ export class UsersService {
       },
     });
   }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.user.delete({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+      },
+    });
+  }
 }

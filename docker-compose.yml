@@ -1,33 +1,20 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: invenapps-postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: invenapps
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: invenapps-backend
-    restart: always
+    restart: unless-stopped
+    #    build: ./backend
+    image: gama/backend-app:1.0
     ports:
-      - "3000:3000"
+      - '3000:3000'
+      - '5555:5555'
     environment:
-      DATABASE_URL: "postgresql://postgres:password123@postgres:5432/invenapps?schema=public"
-      JWT_SECRET: "super_secret_jwt_key_invenapps_2026"
-      PORT: 3000
-    depends_on:
-      - postgres
+      - JWT_SECRET= "ADALAHINTINYA"
+      - DATABASE_URL="postgresql://postgres:akunPostgres5@10.3.3.2:5432/inventory_pt"
 
-volumes:
-  pgdata:
+  frontend:
+    restart: unless-stopped
+    #    build: ./frontend
+    image: gama/frontend-app:1.0
+    ports:
+      - '4200:80'
+    depends_on:
+      - backend

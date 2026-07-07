@@ -13,8 +13,15 @@ WORKDIR /usr/src/app
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY . .
 # We run prisma generate (if schema exists) before building to compile the types
+#RUN npx prisma generate || true
+#RUN npm run build
+#RUN npm prune --production
 RUN npx prisma generate || true
-RUN npm run build
+
+RUN npm run build && \
+    echo "=== DIST CONTENT ===" && \
+    find dist -type f
+
 RUN npm prune --production
 
 # Production runner
@@ -30,3 +37,21 @@ COPY --from=builder /usr/src/app/prisma ./prisma
 EXPOSE 3000
 
 CMD ["node", "dist/main"]
+
+# FROM node:20
+
+# # WORKDIR /app
+# WORKDIR /usr/src/app
+
+# COPY package*.json ./
+# COPY prisma ./prisma
+
+# RUN npm install
+
+# COPY . .
+
+# RUN npm run build
+
+# EXPOSE 3000
+
+# CMD ["node", "dist/main"]
