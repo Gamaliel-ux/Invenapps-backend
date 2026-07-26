@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  Min,
+} from 'class-validator';
 import { MovementType } from '@prisma/client';
 
 export class CreateStockMovementDto {

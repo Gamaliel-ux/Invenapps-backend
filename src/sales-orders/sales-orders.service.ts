@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSalesOrderDto } from './dto/create-sales-order.dto';
 import { UpdateSOStatusDto } from './dto/update-so-status.dto';
@@ -33,38 +38,47 @@ export class SalesOrdersService {
       where: { code: dto.code },
     });
     if (existing) {
-      throw new ConflictException(`Sales Order code "${dto.code}" already exists`);
+      throw new ConflictException(
+        `Sales Order code "${dto.code}" already exists`,
+      );
     }
 
     const customer = await this.prisma.customer.findUnique({
       where: { id: dto.customerId },
     });
     if (!customer) {
-      throw new NotFoundException(`Customer with ID ${dto.customerId} not found`);
+      throw new NotFoundException(
+        `Customer with ID ${dto.customerId} not found`,
+      );
     }
 
-    const totalValue = dto.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalValue = dto.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
     const status = dto.status || SOStatus.DRAFT;
 
-    const productIds = dto.items.map(i => i.productId);
+    const productIds = dto.items.map((i) => i.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, isDeleted: false },
     });
-    const foundIds = products.map(p => p.id);
-    const missingIds = productIds.filter(id => !foundIds.includes(id));
+    const foundIds = products.map((p) => p.id);
+    const missingIds = productIds.filter((id) => !foundIds.includes(id));
     if (missingIds.length > 0) {
-      throw new NotFoundException(`Products not found: ${missingIds.join(', ')}`);
+      throw new NotFoundException(
+        `Products not found: ${missingIds.join(', ')}`,
+      );
     }
 
     // If directly created as PAID or COMPLETED, validate and deduct stock
     if (status === SOStatus.PAID || status === SOStatus.COMPLETED) {
-      await this.validateAndDeductStock(dto.items, reqUser.username, dto.code as string);
+      await this.validateAndDeductStock(dto.items, reqUser.username, dto.code);
     }
 
     // Create SO
     const so = await this.prisma.salesOrder.create({
       data: {
-        code: dto.code as string,
+        code: dto.code,
         customerId: dto.customerId,
         totalValue,
         status,
@@ -100,12 +114,20 @@ export class SalesOrdersService {
     return so;
   }
 
-  private async validateAndDeductStock(items: any[], username: string, code: string) {
+  private async validateAndDeductStock(
+    items: any[],
+    username: string,
+    code: string,
+  ) {
     await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       for (const item of items) {
-        const product = await tx.product.findUnique({ where: { id: item.productId } });
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+        });
         if (!product || product.isDeleted) {
-          throw new NotFoundException(`Product with ID ${item.productId} not found`);
+          throw new NotFoundException(
+            `Product with ID ${item.productId} not found`,
+          );
         }
         if (product.stock < item.quantity) {
           throw new BadRequestException(
@@ -196,7 +218,9 @@ export class SalesOrdersService {
     const so = await this.findOne(id);
 
     if (so.status === SOStatus.CANCELLED) {
-      throw new BadRequestException('Cannot change status of a CANCELLED Sales Order');
+      throw new BadRequestException(
+        'Cannot change status of a CANCELLED Sales Order',
+      );
     }
 
     const { status, notes } = dto;
@@ -204,7 +228,7 @@ export class SalesOrdersService {
 
     // Deduct stock if transitioning from DRAFT to PAID/COMPLETED
     const needsDeduction =
-      (oldStatus === SOStatus.DRAFT) &&
+      oldStatus === SOStatus.DRAFT &&
       (status === SOStatus.PAID || status === SOStatus.COMPLETED);
 
     // Refund stock if transitioning from PAID/COMPLETED to CANCELLED

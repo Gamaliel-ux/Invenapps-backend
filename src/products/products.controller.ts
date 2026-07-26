@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -33,13 +45,21 @@ export class ProductsController {
 
   @Put(':id')
   @Roles(Role.ADMIN, Role.MANAGER)
-  async update(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req: any) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+    @Request() req: any,
+  ) {
     return this.productsService.update(id, dto, req.user);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN, Role.MANAGER)
-  async patch(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req: any) {
+  async patch(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+    @Request() req: any,
+  ) {
     return this.productsService.update(id, dto, req.user);
   }
 

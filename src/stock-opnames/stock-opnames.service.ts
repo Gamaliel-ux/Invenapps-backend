@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStockOpnameDto } from './dto/create-stock-opname.dto';
 import { ProductsService } from '../products/products.service';
@@ -30,7 +35,9 @@ export class StockOpnamesService {
       where: { code: dto.code },
     });
     if (existing) {
-      throw new ConflictException(`Stock Opname code "${dto.code}" already exists`);
+      throw new ConflictException(
+        `Stock Opname code "${dto.code}" already exists`,
+      );
     }
 
     const product = await this.prisma.product.findFirst({
@@ -46,7 +53,7 @@ export class StockOpnamesService {
 
     const opname = await this.prisma.stockOpname.create({
       data: {
-        code: dto.code as string,
+        code: dto.code,
         productId: dto.productId,
         systemQuantity,
         physicalQuantity: dto.physicalQuantity,
@@ -91,7 +98,9 @@ export class StockOpnamesService {
   async adjust(id: string, reqUser: any) {
     const opname = await this.findOne(id);
     if (opname.status === OpnameStatus.ADJUSTED) {
-      throw new BadRequestException('This stock opname has already been ADJUSTED');
+      throw new BadRequestException(
+        'This stock opname has already been ADJUSTED',
+      );
     }
 
     await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {

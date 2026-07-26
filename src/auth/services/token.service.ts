@@ -19,7 +19,9 @@ export class TokenService {
     return this.jwtService.sign(
       { sub: userId, username, type: 'refresh' },
       {
-        secret: this.configService.get<string>('JWT_SECRET') || 'super_secret_jwt_key_invenapps_2026',
+        secret:
+          this.configService.get<string>('JWT_SECRET') ||
+          'super_secret_jwt_key_invenapps_2026',
         expiresIn: '7d',
       },
     );
@@ -31,7 +33,9 @@ export class TokenService {
   verifyRefreshToken(token: string) {
     try {
       return this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_SECRET') || 'super_secret_jwt_key_invenapps_2026',
+        secret:
+          this.configService.get<string>('JWT_SECRET') ||
+          'super_secret_jwt_key_invenapps_2026',
       });
     } catch (error) {
       return null;

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,7 +42,11 @@ export class SuppliersController {
 
   @Put(':id')
   @Roles(Role.ADMIN, Role.MANAGER)
-  async update(@Param('id') id: string, @Body() dto: CreateSupplierDto, @Request() req: any) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: CreateSupplierDto,
+    @Request() req: any,
+  ) {
     return this.suppliersService.update(id, dto, req.user);
   }
 

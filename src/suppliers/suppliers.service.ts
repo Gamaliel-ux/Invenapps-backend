@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -28,8 +32,8 @@ export class SuppliersService {
     return this.prisma.supplier.findMany({
       include: {
         _count: {
-          select: { products: true, PurchaseOrders: true }
-        }
+          select: { products: true, PurchaseOrders: true },
+        },
       },
       orderBy: { name: 'asc' },
     });
@@ -67,7 +71,9 @@ export class SuppliersService {
   async remove(id: string, reqUser: any) {
     const supplier = await this.findOne(id);
     if (supplier.products.length > 0) {
-      throw new ConflictException('Cannot delete supplier associated with products');
+      throw new ConflictException(
+        'Cannot delete supplier associated with products',
+      );
     }
     await this.prisma.supplier.delete({ where: { id } });
 

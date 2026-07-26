@@ -22,5 +22,6 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
   },
-  "exclude": ["node_modules", "dist", "test", "inventory"]
+  "exclude": ["node_modules", "dist", "test", "inventory"],
+  "include": ["src/**/*"]
 }

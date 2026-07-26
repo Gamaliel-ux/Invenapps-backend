@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from '../auth/dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -9,13 +13,30 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(registerDto: RegisterDto) {
-    const { username, password, role } = registerDto;
+    const { username, email, password, role } = registerDto;
 
-    const existing = await this.prisma.user.findUnique({
-      where: { username },
+    const existingUsername = await this.prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
     });
-    if (existing) {
+    if (existingUsername) {
       throw new ConflictException('Username already exists');
+    }
+
+    const existingEmail = await this.prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive',
+        },
+      },
+    });
+    if (existingEmail) {
+      throw new ConflictException('Email already exists');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -23,12 +44,14 @@ export class UsersService {
     return this.prisma.user.create({
       data: {
         username,
+        email,
         passwordHash,
         role: role || Role.STAFF,
       },
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
         createdAt: true,
@@ -37,11 +60,17 @@ export class UsersService {
   }
 
   async findOneByUsername(username: string) {
-    return this.prisma.user.findUnique({
-      where: { username },
+    return this.prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
       select: {
         id: true,
         username: true,
+        email: true,
         passwordHash: true,
         role: true,
         isActive: true,
@@ -50,6 +79,8 @@ export class UsersService {
         lastLoginAt: true,
         isFirstLogin: true,
         createdAt: true,
+        mfaSecret: true,
+        isMfaEnabled: true,
       },
     });
   }
@@ -60,8 +91,10 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
+        isMfaEnabled: true,
         createdAt: true,
       },
     });
@@ -71,11 +104,32 @@ export class UsersService {
     return user;
   }
 
+  async updateMfaSettings(
+    id: string,
+    data: { mfaSecret?: string | null; isMfaEnabled?: boolean },
+  ) {
+    await this.findOne(id);
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        isMfaEnabled: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async findAll() {
     return this.prisma.user.findMany({
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
         createdAt: true,
@@ -91,6 +145,7 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
         createdAt: true,
@@ -106,6 +161,7 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
         createdAt: true,
@@ -124,6 +180,7 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        email: true,
         role: true,
         isActive: true,
         loginAttempts: true,

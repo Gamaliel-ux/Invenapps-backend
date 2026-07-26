@@ -1,98 +1,91 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🛡️ InvenPro - Enterprise API & Security Engine (Backend)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+InvenPro Backend adalah server REST API tangguh yang dibangun menggunakan **NestJS**, **TypeScript**, dan **Prisma ORM** dengan database **PostgreSQL**. Backend ini mengendalikan seluruh logika bisnis, transaksi logistik aman, pengawasan kepatuhan audit, dan protokol keamanan data inventaris.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🔒 Fitur Keamanan & Otentikasi Utama
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. Multi-Factor Authentication (MFA)
+* Mengamankan hak akses khusus peran **ADMIN** menggunakan skema Time-based One-time Password (TOTP) yang ditenagai oleh pustaka `otplib` v12.
+* Login Admin akan mengembalikan respons tantangan `mfaRequired` beserta token sementara (`mfaToken`). Sesi login penuh dan JWT token utama baru akan diterbitkan setelah kode OTP 6 digit berhasil divalidasi.
 
-## Project setup
+### 2. Kebijakan Brute-Force Lockout
+* Melindungi akun operator dari serangan brute-force.
+* Akun pengguna otomatis dinonaktifkan sementara (terkunci selama **5 menit**) jika salah memasukkan kata sandi sebanyak **3 kali** berturut-turut.
+* Kolom `loginAttempts` dan `lockUntil` dikelola langsung di database PostgreSQL untuk menjaga persistensi status lockout.
 
-```bash
-$ npm install
+### 3. Proteksi CORS (Cross-Origin Resource Sharing) Dinamis
+* Mengizinkan koneksi dari `localhost` pada port apa saja untuk mempermudah tahap pengembangan.
+* Menyaring domain produksi eksternal secara aman menggunakan daftar putih eksplisit (`allowedOrigins`) dan variabel lingkungan dinamis (`CORS_ORIGIN` di dalam berkas `.env`).
+
+---
+
+## 🏗️ Struktur Skema Database (Prisma PostgreSQL)
+
+* **User**: Profil operator dengan atribut `Role` (ADMIN, MANAGER, STAFF), penanda MFA, dan catatan status kunci (*lockout*).
+* **Product**: Menyimpan data SKU, barcode unik, harga beli/jual, stok riil, serta ambang batas stok minimum (`minStock`).
+* **PurchaseOrder & SalesOrder**: Mengelola dokumen transaksi pengadaan barang (dari supplier) dan penjualan ritel (ke customer), lengkap beserta riwayat transisi status pembayaran/penerimaan barang.
+* **StockMovement & StockOpname**: Mencatat mutasi inventaris secara rinci (IN, OUT, ADJUSTMENT, RETURN, TRANSFER) dan data rekonsiliasi audit fisik gudang.
+* **AuditLog & Notification**: Log audit kepatuhan aktivitas sistem (siapa, melakukan apa, kapan) serta data antrean peringatan tingkat stok barang gudang.
+
+---
+
+## ⚙️ Cara Menjalankan Project (Local Development)
+
+### 1. Prasyarat
+* Node.js versi 18 atau 20+
+* Docker / PostgreSQL server lokal yang sedang berjalan
+
+### 2. Konfigurasi Lingkungan (`.env`)
+Salin berkas konfigurasi lingkungan dan sesuaikan kredensial PostgreSQL Anda:
+```env
+DATABASE_URL="postgresql://postgres:gama@localhost:5432/inventory_pt"
+JWT_SECRET="super_secret_jwt_key_invenapps_2026"
+PORT=3000
+CORS_ORIGIN="http://localhost:3001,http://localhost:3002"
 ```
 
-## Compile and run the project
-
+### 3. Jalankan Migrasi Database & Prisma Client
 ```bash
-# development
-$ npm run start
+# Instalasi dependensi
+npm install
 
-# watch mode
-$ npm run start:dev
+# Jalankan migrasi schema ke PostgreSQL
+npx prisma db push
 
-# production mode
-$ npm run start:prod
+# Generate Prisma Client Types
+npx prisma generate
 ```
 
-## Run tests
+### 4. Seed Awal Akun Operator (Penting)
+Untuk memasukkan akun bawaan awal (*seeded users*):
+* `Gama` (Role: `ADMIN`, Password: `password123`, memiliki MFA)
+* `Staff` (Role: `STAFF`, Password: `password123`)
+* `Manager` (Role: `MANAGER`, Password: `password123`)
 
+Jalankan perintah berikut:
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npx prisma db seed
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 5. Jalankan Backend Server
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Mode Development (Auto-Reload)
+npm run start:dev
+
+# Mode Produksi
+npm run build
+npm run start:prod
 ```
+Server backend akan aktif di alamat `http://localhost:3000/api`.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📋 Pengujian & Dokumentasi API
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+* **Swagger API Docs**: Dokumentasi interaktif REST API secara lengkap dapat langsung diakses di alamat: `http://localhost:3000/api/docs`
+* **Unit Testing**: Jalankan test suite terintegrasi (Jest) untuk memverifikasi logika login, registrasi, dan MFA:
+  ```bash
+  npm run test
+  ```

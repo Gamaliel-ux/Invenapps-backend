@@ -42,7 +42,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // Log error details server-side only
     this.logger.error(
       `${request.method} ${request.url} - ${status}`,
-      details ? `Validation errors: ${JSON.stringify(details)}` : (exception instanceof Error ? exception.stack : JSON.stringify(exception)),
+      details
+        ? `Validation errors: ${JSON.stringify(details)}`
+        : exception instanceof Error
+          ? exception.stack
+          : JSON.stringify(exception),
     );
 
     const errorResponse = {

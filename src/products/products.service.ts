@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -110,7 +114,9 @@ export class ProductsService {
         where: { sku: dto.sku, id: { not: id } },
       });
       if (existingSku) {
-        throw new ConflictException(`SKU "${dto.sku}" is already in use by another product`);
+        throw new ConflictException(
+          `SKU "${dto.sku}" is already in use by another product`,
+        );
       }
     }
 
@@ -119,45 +125,66 @@ export class ProductsService {
         where: { barcode: dto.barcode, id: { not: id } },
       });
       if (existingBarcode) {
-        throw new ConflictException(`Barcode "${dto.barcode}" is already in use by another product`);
+        throw new ConflictException(
+          `Barcode "${dto.barcode}" is already in use by another product`,
+        );
       }
     }
 
-    const isStockChanged = dto.stock !== undefined && dto.stock !== product.stock;
+    const isStockChanged =
+      dto.stock !== undefined && dto.stock !== product.stock;
     const difference = isStockChanged ? dto.stock! - product.stock : 0;
 
-    const updated = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const result = await tx.product.update({
-        where: { id },
-        data: {
-          sku: dto.sku !== undefined ? dto.sku : product.sku,
-          barcode: dto.barcode !== undefined ? dto.barcode : product.barcode,
-          name: dto.name !== undefined ? dto.name : product.name,
-          description: dto.description !== undefined ? dto.description : product.description,
-          categoryId: dto.categoryId !== undefined ? dto.categoryId : product.categoryId,
-          supplierId: dto.supplierId !== undefined ? (dto.supplierId || null) : product.supplierId,
-          purchasePrice: dto.purchasePrice !== undefined ? dto.purchasePrice : product.purchasePrice,
-          sellingPrice: dto.sellingPrice !== undefined ? dto.sellingPrice : product.sellingPrice,
-          stock: dto.stock !== undefined ? dto.stock : product.stock,
-          minStock: dto.minStock !== undefined ? dto.minStock : product.minStock,
-          unit: dto.unit !== undefined ? dto.unit : product.unit,
-        },
-      });
-
-      if (isStockChanged) {
-        await tx.stockMovement.create({
+    const updated = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const result = await tx.product.update({
+          where: { id },
           data: {
-            productId: id,
-            type: MovementType.ADJUSTMENT,
-            quantity: difference,
-            user: reqUser.username,
-            notes: 'Manual inventory adjustment override',
+            sku: dto.sku !== undefined ? dto.sku : product.sku,
+            barcode: dto.barcode !== undefined ? dto.barcode : product.barcode,
+            name: dto.name !== undefined ? dto.name : product.name,
+            description:
+              dto.description !== undefined
+                ? dto.description
+                : product.description,
+            categoryId:
+              dto.categoryId !== undefined
+                ? dto.categoryId
+                : product.categoryId,
+            supplierId:
+              dto.supplierId !== undefined
+                ? dto.supplierId || null
+                : product.supplierId,
+            purchasePrice:
+              dto.purchasePrice !== undefined
+                ? dto.purchasePrice
+                : product.purchasePrice,
+            sellingPrice:
+              dto.sellingPrice !== undefined
+                ? dto.sellingPrice
+                : product.sellingPrice,
+            stock: dto.stock !== undefined ? dto.stock : product.stock,
+            minStock:
+              dto.minStock !== undefined ? dto.minStock : product.minStock,
+            unit: dto.unit !== undefined ? dto.unit : product.unit,
           },
         });
-      }
 
-      return result;
-    });
+        if (isStockChanged) {
+          await tx.stockMovement.create({
+            data: {
+              productId: id,
+              type: MovementType.ADJUSTMENT,
+              quantity: difference,
+              user: reqUser.username,
+              notes: 'Manual inventory adjustment override',
+            },
+          });
+        }
+
+        return result;
+      },
+    );
 
     await this.auditLogs.create({
       userId: reqUser.id,
@@ -176,7 +203,7 @@ export class ProductsService {
 
   async remove(id: string, reqUser: any) {
     const product = await this.findOne(id);
-    
+
     await this.prisma.product.update({
       where: { id },
       data: { isDeleted: true },

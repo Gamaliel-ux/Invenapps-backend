@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
@@ -33,8 +37,8 @@ export class CategoriesService {
     return this.prisma.category.findMany({
       include: {
         _count: {
-          select: { products: true }
-        }
+          select: { products: true },
+        },
       },
       orderBy: { name: 'asc' },
     });

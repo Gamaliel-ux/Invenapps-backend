@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,7 +35,10 @@ export class UsersController {
 
   @Patch(':id/status')
   @Roles(Role.ADMIN)
-  async updateStatus(@Param('id') id: string, @Body('isActive') isActive: boolean) {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body('isActive') isActive: boolean,
+  ) {
     return this.usersService.updateStatus(id, isActive);
   }
 
@@ -41,6 +52,15 @@ export class UsersController {
   @Roles(Role.ADMIN)
   async unlockUser(@Param('id') id: string) {
     return this.usersService.unlockUser(id);
+  }
+
+  @Patch(':id/mfa/reset')
+  @Roles(Role.ADMIN)
+  async resetMfa(@Param('id') id: string) {
+    return this.usersService.updateMfaSettings(id, {
+      mfaSecret: null,
+      isMfaEnabled: false,
+    });
   }
 
   @Delete(':id')

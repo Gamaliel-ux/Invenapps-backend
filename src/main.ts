@@ -23,11 +23,21 @@ async function bootstrap() {
         origin.startsWith('https://localhost:') ||
         origin.startsWith('http://127.0.0.1:') ||
         origin.startsWith('https://127.0.0.1:');
-      
+
       const envOrigins = process.env.CORS_ORIGIN?.split(',') || [];
-      const isEnvMatch = envOrigins.some(o => o.trim() === origin);
-      
-      if (isLocalhost || isEnvMatch) {
+      const isEnvMatch = envOrigins.some((o) => o.trim() === origin);
+
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://[IP_ADDRESS]',
+        'https://www.invenapps.id',
+        'https://invenapps.id',
+      ];
+
+      const isAllowedOrigin = allowedOrigins.includes(origin);
+
+      if (isLocalhost || isEnvMatch || isAllowedOrigin) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -70,13 +80,15 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+  console.log(
+    `Swagger documentation is available at: http://localhost:${port}/api/docs`,
+  );
 }
 bootstrap();

@@ -1,11 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePOStatusDto } from './dto/update-po-status.dto';
 import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { POStatus, MovementType, NotificationType, Prisma } from '@prisma/client';
+import {
+  POStatus,
+  MovementType,
+  NotificationType,
+  Prisma,
+} from '@prisma/client';
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -14,7 +24,7 @@ export class PurchaseOrdersService {
     private productsService: ProductsService,
     private notifications: NotificationsService,
     private auditLogs: AuditLogsService,
-  ) { }
+  ) {}
 
   async create(dto: CreatePurchaseOrderDto, reqUser: any) {
     // Auto-generate code if not provided
@@ -35,34 +45,43 @@ export class PurchaseOrdersService {
       where: { code: dto.code },
     });
     if (existing) {
-      throw new ConflictException(`Purchase Order code "${dto.code}" already exists`);
+      throw new ConflictException(
+        `Purchase Order code "${dto.code}" already exists`,
+      );
     }
 
     const supplier = await this.prisma.supplier.findUnique({
       where: { id: dto.supplierId },
     });
     if (!supplier) {
-      throw new NotFoundException(`Supplier with ID ${dto.supplierId} not found`);
+      throw new NotFoundException(
+        `Supplier with ID ${dto.supplierId} not found`,
+      );
     }
 
     // Calculate total value
-    const totalValue = dto.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalValue = dto.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
 
     // Create PO
     const status = dto.status || POStatus.DRAFT;
 
-    const productIds = dto.items.map(i => i.productId);
+    const productIds = dto.items.map((i) => i.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, isDeleted: false },
     });
-    const foundIds = products.map(p => p.id);
-    const missingIds = productIds.filter(id => !foundIds.includes(id));
+    const foundIds = products.map((p) => p.id);
+    const missingIds = productIds.filter((id) => !foundIds.includes(id));
     if (missingIds.length > 0) {
-      throw new NotFoundException(`Products not found: ${missingIds.join(', ')}`);
+      throw new NotFoundException(
+        `Products not found: ${missingIds.join(', ')}`,
+      );
     }
     const po = await this.prisma.purchaseOrder.create({
       data: {
-        code: dto.code as string,
+        code: dto.code,
         supplierId: dto.supplierId,
         totalValue,
         status,
@@ -135,7 +154,9 @@ export class PurchaseOrdersService {
     const po = await this.findOne(id);
 
     if (po.status === POStatus.RECEIVED) {
-      throw new BadRequestException('Cannot change status of an already RECEIVED Purchase Order');
+      throw new BadRequestException(
+        'Cannot change status of an already RECEIVED Purchase Order',
+      );
     }
 
     const { status, notes } = dto;
@@ -147,8 +168,13 @@ export class PurchaseOrdersService {
     }
 
     if (status === POStatus.RECEIVED) {
-      if (po.status !== POStatus.APPROVED && po.status !== POStatus.PENDING_APPROVAL) {
-        throw new BadRequestException('Purchase Order must be APPROVED or PENDING_APPROVAL before it can be RECEIVED');
+      if (
+        po.status !== POStatus.APPROVED &&
+        po.status !== POStatus.PENDING_APPROVAL
+      ) {
+        throw new BadRequestException(
+          'Purchase Order must be APPROVED or PENDING_APPROVAL before it can be RECEIVED',
+        );
       }
       receivedBy = reqUser.username;
 

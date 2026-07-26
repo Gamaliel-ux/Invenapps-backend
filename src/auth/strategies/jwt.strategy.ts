@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -9,11 +9,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'super_secret_jwt_key_invenapps_2026',
+      secretOrKey:
+        configService.get<string>('JWT_SECRET') ||
+        'super_secret_jwt_key_invenapps_2026',
     });
   }
 
-  async validate(payload: { sub: string; username: string; role: string }) {
+  async validate(payload: {
+    sub: string;
+    username: string;
+    role: string;
+    isMfaTemp?: boolean;
+  }) {
+    if (payload.isMfaTemp) {
+      throw new UnauthorizedException('MFA verification required');
+    }
     return { id: payload.sub, username: payload.username, role: payload.role };
   }
 }

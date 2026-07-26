@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -32,7 +36,7 @@ export class CustomersService {
 
     const customer = await this.prisma.customer.create({
       data: {
-        code: dto.code as string,
+        code: dto.code,
         name: dto.name,
         phone: dto.phone,
         email: dto.email,
@@ -55,8 +59,8 @@ export class CustomersService {
     return this.prisma.customer.findMany({
       include: {
         _count: {
-          select: { SalesOrders: true }
-        }
+          select: { SalesOrders: true },
+        },
       },
       orderBy: { name: 'asc' },
     });
@@ -83,7 +87,9 @@ export class CustomersService {
       where: { code, id: { not: id } },
     });
     if (existing) {
-      throw new ConflictException(`Customer code "${code}" is already in use by another customer`);
+      throw new ConflictException(
+        `Customer code "${code}" is already in use by another customer`,
+      );
     }
 
     const updated = await this.prisma.customer.update({
@@ -111,7 +117,9 @@ export class CustomersService {
   async remove(id: string, reqUser: any) {
     const customer = await this.findOne(id);
     if (customer.SalesOrders.length > 0) {
-      throw new ConflictException('Cannot delete customer with existing sales orders');
+      throw new ConflictException(
+        'Cannot delete customer with existing sales orders',
+      );
     }
     await this.prisma.customer.delete({ where: { id } });
 
